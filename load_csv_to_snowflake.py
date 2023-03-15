@@ -12,7 +12,9 @@ def load_csvs_to_snowflake_table(
     cur = conn.cursor()
 
     # Get column names from target table schema
-    column_names = get_sf_table_column_names(cur, fully_qualified_table_name)
+    cur.execute(f"SELECT * FROM {fully_qualified_table_name} WHERE 1=0;")
+    column_names = [col[0] for col in cur.description]
+    column_names = [item.upper() for item in column_names]
 
     for csv_file_path in csv_file_paths:
         try: 
@@ -36,23 +38,13 @@ def load_csvs_to_snowflake_table(
     
             # Upload file from staging to final table
             filename = os.path.basename(temp_csv_file_path)
-            copy_query = f"copy into {fully_qualified_table_name} from @{stage}/{filename}.gz file_format = (TYPE=CSV);"
+            copy_query = f"copy into {fully_qualified_table_name} from @{stage}/{filename}.gz file_format = (TYPE=CSV, SKIP_HEADER=1);"
             cur.execute(copy_query)
     
             # Remove the temporary reordered CSV file
             os.remove(temp_csv_file_path)
             print(f"{csv_file_path} successfully written to {fully_qualified_table_name}")
             
-        except Execption as e:
+        except Exception as e:
             print(f"Error writing {csv_file_path} to Snowflake: {e}")
-
-def get_sf_table_column_names(
-     cur: snowflake.connector.cursor.SnowflakeCursor,
-     fully_qualified_table_name: str
-):
-
-    cur.execute(f"SELECT * FROM {fully_qualified_table_name} WHERE 1=0;")
-    column_names = [col[0] for col in cur.description]
-    column_names_upper_case = [item.upper() for item in column_names]
-    return column_names_upper_case
 
