@@ -22,7 +22,7 @@ def main():
         sys.exit(1)
 
     #Set your directory containing csv file to load into Snowflake e.g. "/home/user/data/csv_files"
-    csv_dir = "/home/tomprescott/git/tech_test_local"
+    csv_dir = ""
 
     try:
         csv_file_paths = glob.glob(os.path.join(csv_dir, "*.csv"))
